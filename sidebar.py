@@ -1,6 +1,8 @@
 import json
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QScrollArea, QMenu, QLineEdit, QApplication
-from PySide6.QtCore import Qt, QTimer, QSize, QEvent
+import os
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QScrollArea, QMenu, QLineEdit, QApplication, QSizePolicy
+from PySide6.QtCore import Qt, QEvent, QSize
+from PySide6.QtGui import QPixmap, QIcon
 
 class Sidebar(QWidget):
     def __init__(self, parent=None):
@@ -74,6 +76,16 @@ class Sidebar(QWidget):
         # Set up event filter to detect outside clicks
         self.installEventFilter(self)
 
+        # Dictionary to map sport names to image file paths
+        self.base_path = os.path.dirname(os.path.abspath(__file__))
+        self.sport_images = {
+            "CS2": os.path.join(self.base_path, "images/cs2.png"),
+            "LoL": os.path.join(self.base_path, "images/LoL.png"),
+            "Futbol": os.path.join(self.base_path, "images/Futbol.png"),
+            "NBA": os.path.join(self.base_path, "images/NBA.png"),
+            "MLB": os.path.join(self.base_path, "images/MLB.png")
+        }
+
     def add_button(self, text):
         button = QPushButton(text)
         button.setStyleSheet("text-align: left; padding: 10px; border: none; border-radius: 5px;")  # Rounded corners
@@ -88,6 +100,8 @@ class Sidebar(QWidget):
         # Connect button clicked signal to handle active state
         button.clicked.connect(lambda checked, btn=button: self.set_active_button(btn))
 
+        self.save_buttons()  # Save buttons after adding
+
     def open_menu(self, pos, button):
         menu = QMenu()
 
@@ -97,10 +111,51 @@ class Sidebar(QWidget):
 
             delete_action = menu.addAction("Delete")
             delete_action.triggered.connect(lambda: self.delete_button(button))
+
+            select_sport_action = menu.addAction("Select Sport")
+            select_sport_action.triggered.connect(lambda: self.open_sport_menu(button, pos))
         except Exception as e:
             print(f"Error creating menu: {e}")
 
         menu.exec_(button.mapToGlobal(pos))
+
+    def open_sport_menu(self, button, pos):
+        sport_menu = QMenu()
+
+        for sport, image_path in self.sport_images.items():
+            action = sport_menu.addAction(sport)
+            action.triggered.connect(lambda checked, sport=sport: self.set_sport_image(button, sport))
+
+        sport_menu.exec_(self.mapToGlobal(pos))
+
+    def set_sport_image(self, button, sport):
+        image_path = self.sport_images.get(sport)
+        if not image_path:
+            print(f"Image path for {sport} not found.")
+            return
+        
+        pixmap = QPixmap(image_path)
+        
+        if pixmap.isNull():
+            print(f"Failed to load image from {image_path}")
+            return
+
+        # Resize pixmap to fit button height while maintaining aspect ratio
+        button_height = button.sizeHint().height() - 20  # adjust for padding
+        scaled_pixmap = pixmap.scaledToHeight(button_height, Qt.SmoothTransformation)
+
+        # Set the image to the right side of the button
+        button.setIcon(QIcon(scaled_pixmap))
+        button.setIconSize(QSize(scaled_pixmap.width(), scaled_pixmap.height()))
+
+        # Adjust the button's text alignment and icon position
+        button.setStyleSheet("""
+            text-align: left; 
+            padding: 10px; 
+            border: none; 
+            border-radius: 5px;
+            padding-right: 30px;  /* Space for the icon */
+            """)  
 
     def rename_button(self, button):
         # Clear active button's highlighting
@@ -171,13 +226,20 @@ class Sidebar(QWidget):
     def set_active_button(self, button):
         # Clear active style from previous active button
         if self.current_button:
-            self.current_button.setStyleSheet("text-align: left; padding: 10px; border: none; border-radius: 5px;")
+            try:
+                self.current_button.setStyleSheet("text-align: left; padding: 10px; border: none; border-radius: 5px;")
+            except RuntimeError:
+                self.current_button = None  # Reset if the previous button is deleted
 
         # Set new active button
         self.current_button = button
         self.current_button.setStyleSheet("background-color: #c0c0c0; text-align: left; padding: 10px; border: none; border-radius: 5px;")
 
     def delete_button(self, button):
+        # Check if the button to be deleted is the current active button
+        if self.current_button == button:
+            self.current_button = None
+
         self.scroll_layout.removeWidget(button)
         button.deleteLater()
         self.buttons.remove(button)

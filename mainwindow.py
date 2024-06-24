@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
         # Sidebar setup
         self.sidebar = Sidebar()
         self.sidebar.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)  # Set policy for expanding and shrinking
-        
+
         # Initial widths based on percentage of window width
         self.update_sidebar_widths()
 
@@ -48,6 +48,9 @@ class MainWindow(QMainWindow):
 
         # Load the saved state
         self.load_state()
+
+        # Connect sidebar's save button to save state
+        self.sidebar.save_button.clicked.connect(self.save_state)
 
     def update_sidebar_widths(self):
         # Calculate min and max widths based on current window size
@@ -90,6 +93,10 @@ class MainWindow(QMainWindow):
 
     def resizeEvent(self, event):
         self.update_sidebar_widths()
+        event.accept()
+
+    def closeEvent(self, event):
+        self.save_state()  # Save state when window is closing
         event.accept()
 
 if __name__ == "__main__":
