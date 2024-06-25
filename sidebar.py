@@ -117,7 +117,20 @@ class Sidebar(QWidget):
         except Exception as e:
             print(f"Error creating menu: {e}")
 
+        # Connect signals to highlight/unhighlight button
+        menu.aboutToShow.connect(lambda: self.highlight_button(button))
+        menu.aboutToHide.connect(lambda: self.unhighlight_button(button))
+
+        if self.current_button:
+            self.unhighlight_button(self.current_button)
+
         menu.exec_(button.mapToGlobal(pos))
+
+    def highlight_button(self, button):
+        button.setStyleSheet("background-color: rgba(192, 192, 192, 150); text-align: left; padding: 10px; border: none; border-radius: 5px;")
+
+    def unhighlight_button(self, button):
+        button.setStyleSheet("text-align: left; padding: 10px; border: none; border-radius: 5px;")
 
     def open_sport_menu(self, button, pos):
         sport_menu = QMenu()
@@ -155,7 +168,7 @@ class Sidebar(QWidget):
             border: none; 
             border-radius: 5px;
             padding-right: 30px;  /* Space for the icon */
-            """)  
+            """)
 
     def rename_button(self, button):
         # Clear active button's highlighting
@@ -224,7 +237,7 @@ class Sidebar(QWidget):
         line_edit.setFocus()
 
     def set_active_button(self, button):
-        # Clear active style from previous active button
+        # Clear active style from previous active button (if any)
         if self.current_button:
             try:
                 self.current_button.setStyleSheet("text-align: left; padding: 10px; border: none; border-radius: 5px;")
@@ -233,7 +246,8 @@ class Sidebar(QWidget):
 
         # Set new active button
         self.current_button = button
-        self.current_button.setStyleSheet("background-color: #c0c0c0; text-align: left; padding: 10px; border: none; border-radius: 5px;")
+        self.current_button.setStyleSheet("background-color: rgba(192, 192, 192, 150); text-align: left; padding: 10px; border: none; border-radius: 5px;")
+
 
     def delete_button(self, button):
         # Check if the button to be deleted is the current active button
