@@ -1,6 +1,6 @@
 import json
 from PySide6.QtWidgets import QMainWindow, QHBoxLayout, QWidget, QStackedWidget, QSplitter, QSizePolicy, QApplication
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 
 from sidebar import Sidebar
 from pages import Page1, Page2
@@ -9,6 +9,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Tournament Pickems")
+        self.setMinimumSize(QSize(640, 480))
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
